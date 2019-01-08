@@ -1,18 +1,22 @@
 package controllers
 
 import (
+	"encoding/json"
 	"net/http"
 
+	"github.com/galuhpradipta/service-package-layout/payloads"
 	"github.com/galuhpradipta/service-package-layout/src/interfaces"
-	"github.com/labstack/echo"
 )
 
 type KwController struct {
 	interfaces.IKwService
 }
 
-func (ctrl *KwController) Welcome(c echo.Context) error {
-	return c.JSON(http.StatusOK, echo.Map{
-		"message": "Welcome to API Service",
+func (c *KwController) Welcome(w http.ResponseWriter, r *http.Request) {
+	json.NewEncoder(w).Encode(payloads.Response{
+		Code: http.StatusOK,
+		Data: map[string]string{
+			"message": "Welcome to API Service",
+		},
 	})
 }
