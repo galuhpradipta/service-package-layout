@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"net/http"
 
 	"github.com/galuhpradipta/service-package-layout/config"
 	"github.com/spf13/viper"
@@ -24,5 +26,8 @@ func init() {
 }
 
 func main() {
-	config.EchoRouter().Run()
+	port := viper.GetString(`server.port`)
+	fmt.Printf("Server started on port: %s\n ---------------\n", port)
+
+	http.ListenAndServe(port, config.Router().Init())
 }

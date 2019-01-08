@@ -2,13 +2,14 @@ package config
 
 import (
 	"sync"
+	"time"
 
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 )
 
 type RouterConfig interface {
-	Run() *echo.Echo
+	Init() *chi.Mux
 }
 
 type router struct{}
@@ -18,7 +19,7 @@ var (
 	routerOnce sync.Once
 )
 
-func EchoRouter() RouterConfig {
+func Router() RouterConfig {
 	if m == nil {
 		routerOnce.Do(func() {
 			m = &router{}
@@ -27,23 +28,18 @@ func EchoRouter() RouterConfig {
 	return m
 }
 
-func (router *router) Run() *echo.Echo {
+func (router *router) Init() *chi.Mux {
 	kwController := ServiceContainer().InjectKwController()
 
-	e := echo.New()
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
-	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"*"},
-		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAcceptEncoding, echo.HeaderCookie},
-		AllowMethods: []string{echo.GET, echo.PUT, echo.POST, echo.DELETE},
-	}))
+	r := chi.NewRouter()
 
-	r := e.Group("/api")
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Timeout(60 * time.Second))
 
-	r.GET("", kwController.Welcome)
+	r.Get("/api", kwController.Welcome)
 
-	e.Logger.Fatal(e.Start(":45004"))
-
-	return e
+	return r
 }
